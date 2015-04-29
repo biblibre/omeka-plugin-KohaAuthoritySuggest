@@ -1,0 +1,30 @@
+# Translation for the Koha Authority Suggest plugin for Omeka.
+# Copyright (C) 2015 BibLibre
+# This file is distributed under the same license as the Omeka package.
+# Julian Maurice <julian.maurice@biblibre.com>, 2015
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: KohaAuthoritySuggest\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-04-30 09:27+0000\n"
+"PO-Revision-Date: 2015-04-30 09:38+0000\n"
+"Last-Translator: Julian Maurice <julian.maurice@biblibre.com>\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: KohaAuthoritySuggestPlugin.php:34
+msgid "Koha authority"
+msgstr "Autorité Koha"
+
+#: KohaAuthoritySuggestPlugin.php:105
+msgid "Z39.50 server URL"
+msgstr "URL du serveur Z39.50"
+
+#: KohaAuthoritySuggestPlugin.php:109
+msgid "PQF Prefix"
+msgstr "Préfixe PQF"
