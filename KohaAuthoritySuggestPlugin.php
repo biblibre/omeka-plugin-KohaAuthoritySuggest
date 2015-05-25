@@ -12,6 +12,7 @@ class KohaAuthoritySuggestPlugin extends Omeka_Plugin_AbstractPlugin
 {
     protected $_hooks = array(
         'initialize',
+        'admin_head',
     );
 
     protected $_filters = array(
@@ -24,9 +25,24 @@ class KohaAuthoritySuggestPlugin extends Omeka_Plugin_AbstractPlugin
     public function hookInitialize()
     {
         add_translation_source(dirname(__FILE__) . '/languages');
+    }
 
-        $front = Zend_Controller_Front::getInstance();
-        $front->registerPlugin(new KohaAuthoritySuggest_Controller_Plugin_Autosuggest);
+    public function hookAdminHead() {
+        $request = Zend_Controller_Front::getInstance()->getRequest();
+
+        $module = $request->getModuleName();
+        if (is_null($module)) {
+            $module = 'default';
+        }
+        $controller = $request->getControllerName();
+        $action = $request->getActionName();
+
+        if ($module === 'default'
+            && $controller === 'items'
+            && in_array($action, array('add', 'edit')))
+        {
+            queue_js_file('koha_authority_suggest');
+        }
     }
 
     public function filterElementTypesInfo($types) {
