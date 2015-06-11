@@ -52,6 +52,7 @@ class KohaAuthoritySuggestPlugin extends Omeka_Plugin_AbstractPlugin
                 'ElementInput' => array($this, 'filterElementInput'),
                 'Flatten' => array($this, 'filterFlatten'),
                 'Display' => array($this, 'filterDisplay'),
+                'Format' => array($this, 'filterFormat'),
             ),
             'hooks' => array(
                 'OptionsForm' => array($this, 'hookOptionsForm'),
@@ -114,6 +115,13 @@ class KohaAuthoritySuggestPlugin extends Omeka_Plugin_AbstractPlugin
         return $element->value;
     }
 
+    public function filterFormat($value, $args)
+    {
+        $suggestions = koha_authority_suggest_suggestions($args['element']->id,
+            $value, 1);
+        return $suggestions ? json_encode($suggestions[0]) : null;
+    }
+
     public function hookOptionsForm($args) {
         $view = get_view();
         $options = $args['element_type']['element_type_options'];
@@ -126,4 +134,84 @@ class KohaAuthoritySuggestPlugin extends Omeka_Plugin_AbstractPlugin
         print $view->formText('pqf_prefix', isset($options['pqf_prefix']) ? $options['pqf_prefix'] : '');
         print '</div>';
     }
+}
+
+function koha_authority_suggest_suggestions($element_id, $term, $count)
+{
+    $element_type = get_db()
+        ->getTable('ElementType')
+        ->findByElementId($element_id);
+    $element_type_options = json_decode($element_type->element_type_options, TRUE);
+
+    $pqf_prefix = $element_type_options['pqf_prefix'];
+    $host = $element_type_options['host'];
+
+    $res = yaz_connect($host);
+    yaz_syntax($res, 'xml');
+    yaz_range($res, 1, $count);
+
+    $query = "@attr 5=3 @attr 4=6 \"$term\"";
+    if ($pqf_prefix) {
+        $query = "$pqf_prefix $query";
+    }
+
+    yaz_search($res, 'rpn', $query);
+    yaz_wait();
+
+    $error = yaz_error($res);
+    if ($error) {
+        error_log("YAZ error: $error");
+        return null;
+    }
+
+    $suggestions = array();
+    for ($i = 1; $i <= min($count, yaz_hits($res)); $i++) {
+        $xml = yaz_record($res, $i, 'xml');
+        if (empty($xml)) {
+            continue;
+        }
+
+        $record = simplexml_load_string($xml);
+        if ($record === FALSE) {
+            error_log('Failed to parse XML');
+            continue;
+        }
+
+        $id = null;
+        foreach ($record->controlfield as $controlfield) {
+            if ($controlfield['tag'] == '001') {
+                $id = (string)$controlfield;
+                break;
+            }
+        }
+
+        $main_entry = null;
+        $secondary_entry = null;
+        foreach ($record->datafield as $datafield) {
+            if (substr($datafield['tag'], 0, 1) == '2') {
+                foreach ($datafield->subfield as $subfield) {
+                    if ($subfield['code'] == 'a') {
+                        $main_entry = (string)$subfield;
+                    } elseif ($subfield['code'] == 'b') {
+                        $secondary_entry = (string)$subfield;
+                    }
+                }
+                if ($main_entry) {
+                    break;
+                }
+            }
+        }
+
+        $value = $main_entry;
+        if (isset($secondary_entry)) {
+            $value .= ", $secondary_entry";
+        }
+
+        $suggestions []= array(
+            'id' => $id,
+            'value' => $value,
+        );
+    }
+
+    return $suggestions;
 }
