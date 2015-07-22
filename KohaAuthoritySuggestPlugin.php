@@ -28,21 +28,7 @@ class KohaAuthoritySuggestPlugin extends Omeka_Plugin_AbstractPlugin
     }
 
     public function hookAdminHead() {
-        $request = Zend_Controller_Front::getInstance()->getRequest();
-
-        $module = $request->getModuleName();
-        if (is_null($module)) {
-            $module = 'default';
-        }
-        $controller = $request->getControllerName();
-        $action = $request->getActionName();
-
-        if ($module === 'default'
-            && $controller === 'items'
-            && in_array($action, array('add', 'edit')))
-        {
-            queue_js_file('koha_authority_suggest');
-        }
+        queue_js_file('koha_authority_suggest');
     }
 
     public function filterElementTypesInfo($types) {
