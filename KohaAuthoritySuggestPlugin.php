@@ -136,7 +136,11 @@ function koha_authority_suggest_suggestions($element_id, $term, $count)
     yaz_syntax($res, 'xml');
     yaz_range($res, 1, $count);
 
-    $query = "@attr 5=3 @attr 4=6 \"$term\"";
+    $base_query = "@attr 4=6 @attr 5=3 \"$term\"";
+    // Use dynamic ranking on Heading-Main
+    // Records which contains the search term in their main heading will be
+    // presented first
+    $query = "@or $base_query @attr 1=Heading-Main @attr 2=102 $base_query";
     if ($pqf_prefix) {
         $query = "$pqf_prefix $query";
     }
