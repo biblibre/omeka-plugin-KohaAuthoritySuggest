@@ -136,11 +136,21 @@ function koha_authority_suggest_suggestions($element_id, $term, $count)
     yaz_syntax($res, 'xml');
     yaz_range($res, 1, $count);
 
-    $base_query = "@attr 4=6 @attr 5=3 \"$term\"";
     // Use dynamic ranking on Heading-Main
     // Records which contains the search term in their main heading will be
     // presented first
-    $query = "@or $base_query @attr 1=Heading-Main @attr 2=102 $base_query";
+    $quoted_term = "\"$term\"";
+    $query = "
+        @attr 2=102
+        @or
+          @or
+            @attr 1=Heading-Main @attr 6=3 @attr 9=32 $quoted_term
+            @attr 1=Heading-Main @attr 9=28 $quoted_term
+          @or
+            @attr 1=Heading-Main @attr 4=6 @attr 9=24 $quoted_term
+            @attr 1=Heading @attr 4=6 @attr 5=3 @attr 9=20 $quoted_term
+    ";
+    $query = trim(preg_replace('/\s+/', ' ', $query));
     if ($pqf_prefix) {
         $query = "$pqf_prefix $query";
     }
@@ -175,26 +185,27 @@ function koha_authority_suggest_suggestions($element_id, $term, $count)
             }
         }
 
-        $main_entry = null;
-        $secondary_entry = null;
+        $main_entry = [];
+        $secondary_entry = [];
         foreach ($record->datafield as $datafield) {
             if (substr($datafield['tag'], 0, 1) == '2') {
+                $secondary_entry = [];
                 foreach ($datafield->subfield as $subfield) {
                     if ($subfield['code'] == 'a') {
-                        $main_entry = (string)$subfield;
+                        $main_entry[] = (string)$subfield;
                     } elseif ($subfield['code'] == 'b') {
-                        $secondary_entry = (string)$subfield;
+                        $secondary_entry[] = (string)$subfield;
                     }
                 }
-                if ($main_entry) {
+                if (!empty($main_entry)) {
                     break;
                 }
             }
         }
 
-        $value = $main_entry;
-        if (isset($secondary_entry)) {
-            $value .= ", $secondary_entry";
+        $value = implode(' ', $main_entry);
+        if (!empty($secondary_entry)) {
+            $value .= ", " . implode(' ', $secondary_entry);
         }
 
         $suggestions []= array(
