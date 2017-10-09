@@ -187,6 +187,7 @@ function koha_authority_suggest_suggestions($element_id, $term, $count)
 
         $main_entry = [];
         $secondary_entry = [];
+        $dates = [];
         foreach ($record->datafield as $datafield) {
             if (substr($datafield['tag'], 0, 1) == '2') {
                 $secondary_entry = [];
@@ -195,6 +196,8 @@ function koha_authority_suggest_suggestions($element_id, $term, $count)
                         $main_entry[] = (string)$subfield;
                     } elseif ($subfield['code'] == 'b') {
                         $secondary_entry[] = (string)$subfield;
+                    } elseif ($subfield['code'] == 'f') {
+                        $dates[] = (string)$subfield;
                     }
                 }
                 if (!empty($main_entry)) {
@@ -206,6 +209,9 @@ function koha_authority_suggest_suggestions($element_id, $term, $count)
         $value = implode(' ', $main_entry);
         if (!empty($secondary_entry)) {
             $value .= ", " . implode(' ', $secondary_entry);
+        }
+        if (!empty($dates)) {
+            $value .= ' (' . implode(' ', $dates) . ')';
         }
 
         $suggestions []= array(
