@@ -29,6 +29,7 @@ class KohaAuthoritySuggestPlugin extends Omeka_Plugin_AbstractPlugin
 
     public function hookAdminHead() {
         queue_js_file('koha_authority_suggest');
+        queue_css_file('koha_authority_suggest');
     }
 
     public function filterElementTypesInfo($types) {

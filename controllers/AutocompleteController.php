@@ -12,7 +12,7 @@ class KohaAuthoritySuggest_AutocompleteController extends Omeka_Controller_Abstr
         $term = $this->getRequest()->getParam('term');
         $element_id = $this->_getParam('element_id');
 
-        $suggestions = koha_authority_suggest_suggestions($element_id, $term, 10);
+        $suggestions = koha_authority_suggest_suggestions($element_id, $term, 200);
         $response = array();
         if ($suggestions) {
             foreach ($suggestions as $suggestion) {
